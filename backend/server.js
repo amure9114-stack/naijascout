@@ -22,6 +22,12 @@ import swaggerSpec from './config/swagger.js';
 // Load environment variables
 dotenv.config();
 
+// Safety: disallow enabling dev tools in production
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEV_TOOLS === 'true') {
+  console.error('Refusing to start: ALLOW_DEV_TOOLS is true in production. Unset ALLOW_DEV_TOOLS to continue.');
+  process.exit(1);
+}
+
 // Connect to MongoDB
 connectDB();
 
