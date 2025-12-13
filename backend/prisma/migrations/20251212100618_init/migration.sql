@@ -1,0 +1,2 @@
+-- Prisma baseline migration (no-op)
+-- This marks the current database schema as the baseline for Prisma migrations.
