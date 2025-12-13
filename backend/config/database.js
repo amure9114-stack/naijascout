@@ -15,7 +15,12 @@ const connectDB = async () => {
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`Error connecting to MongoDB: ${error.message}`);
-    process.exit(1);
+    // In development allow the app to continue even if MongoDB is not available.
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    } else {
+      console.warn('Continuing without MongoDB in non-production environment. Some features may be disabled.');
+    }
   }
 };
 
