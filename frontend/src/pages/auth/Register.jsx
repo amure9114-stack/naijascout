@@ -48,15 +48,15 @@ export default function Register() {
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-cover bg-center" style={{ backgroundImage: `url('/img/bg.jpg')` }}>
       <div className="bg-black/50 absolute inset-0" />
       <Card className="relative z-10 form-card">
-        <h2 className="text-3xl font-bold text-white text-center mb-6">Register</h2>
+        <h2 className="text-3xl font-bold text-green text-center mb-6">Register</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name" required />
           <Input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter your username" required />
           <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" required />
           <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" required />
           <Select value={role} onChange={(e) => setRole(e.target.value)} className="cursor-pointer" required>
-           <option value="player">I'm a Player</option>
-           <option value="scout">I'm a Scout, Agent, Club or Academy</option>
+            <option value="player">I'm a Player</option>
+            <option value="scout">I'm a Scout, Agent, Club or Academy</option>
           </Select>
 
           {error && <p className="text-red-500 text-center">{error}</p>}

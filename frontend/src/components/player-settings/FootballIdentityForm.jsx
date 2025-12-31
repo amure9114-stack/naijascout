@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Shirt, Trophy, Footprints, FileText } from 'lucide-react';
 
 export function FootballIdentityForm({ defaultValues, onSubmit, onBack }) {
     const [formData, setFormData] = useState(defaultValues || {});
+
+    useEffect(() => {
+        setFormData(defaultValues || {});
+    }, [defaultValues]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

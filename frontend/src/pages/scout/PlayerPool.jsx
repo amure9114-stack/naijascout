@@ -6,6 +6,7 @@ import {
   Play, Star, TrendingUp, Eye, Zap, Target, Shield,
   Activity, Flame, Snowflake, Sun, Menu, SlidersHorizontal
 } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 import { usePlayers } from '../../context/PlayerContext.jsx';
 import axios from 'axios';
@@ -89,8 +90,25 @@ const PlayerPool = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const { addToShortlist, cachePlayer, setSelectedId, getPlayer, selectedId } = usePlayers();
+  const { addToShortlist, cachePlayer, setSelectedId, getPlayer, selectedId, shortlist } = usePlayers();
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [unlockedIds, setUnlockedIds] = useState(() => new Set());
+
+  useEffect(() => {
+    // Keep unlocked state aligned with the global shortlist
+    setUnlockedIds(new Set(shortlist.map((p) => p.id)));
+  }, [shortlist]);
+
+  const markUnlocked = (player) => {
+    const added = addToShortlist(player);
+    if (added) {
+      setUnlockedIds((prev) => {
+        const next = new Set(prev);
+        next.add(player.id);
+        return next;
+      });
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -245,13 +263,19 @@ const PlayerPool = () => {
             <Eye className="w-4 h-4" />
             View
           </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); addToShortlist(player); }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/80 transition-colors"
-          >
-            <Lock className="w-4 h-4" />
-            Unlock
-          </button>
+          {(() => {
+            const unlocked = unlockedIds.has(player.id);
+            return (
+              <button
+                onClick={(e) => { e.stopPropagation(); markUnlocked(player); }}
+                disabled={unlocked}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${unlocked ? 'bg-green-600 text-white' : 'bg-primary text-primary-foreground hover:bg-primary/80'}`}
+              >
+                {unlocked ? <Check className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                {unlocked ? 'Unlocked' : 'Add to Shortlist'}
+              </button>
+            );
+          })()}
         </div>
       </motion.div>
     );
@@ -431,26 +455,18 @@ const PlayerPool = () => {
         />
       </div>
 
-      {/* Premium Filters (Locked) */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-background/50 backdrop-blur-sm rounded-lg z-10 flex items-center justify-center">
-          <div className="text-center">
-            <Lock className="w-6 h-6 text-gold mx-auto mb-1" />
-            <span className="text-xs text-gold font-medium">Premium Only</span>
+      {/* Advanced Filters */}
+      <div className="space-y-3">
+        <h4 className="font-display font-semibold flex items-center gap-2">
+          <Star className="w-4 h-4 text-primary" />
+          Advanced Filters
+        </h4>
+        {['Pace', 'Technique', 'Physical', 'Vision', 'Dribbling', 'Finishing'].map(stat => (
+          <div key={stat} className="flex items-center justify-between">
+            <span className="text-sm text-white">{stat}</span>
+            <div className="w-24 h-2 bg-muted rounded-full" />
           </div>
-        </div>
-        <div className="space-y-3 opacity-50">
-          <h4 className="font-display font-semibold flex items-center gap-2">
-            <Star className="w-4 h-4 text-gold" />
-            Advanced Filters
-          </h4>
-          {['Pace', 'Technique', 'Physical', 'Vision', 'Dribbling', 'Finishing'].map(stat => (
-            <div key={stat} className="flex items-center justify-between">
-              <span className="text-sm text-white">{stat}</span>
-              <div className="w-24 h-2 bg-muted rounded-full" />
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
 
       {/* Clear Filters */}
@@ -612,47 +628,48 @@ const PlayerPool = () => {
             </div>
           </div>
 
-          {/* Premium Blurred Section */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center justify-center z-10">
-              <div className="text-center glass opacity-40 rounded-xl p-6">
-                <Lock className="w-8 h-8 text-gold mx-auto mb-2" />
-                <h4 className="font-display font-bold mb-1">Premium Content</h4>
-                <p className="text-xs text-white mb-3">Unlock full contact info & stats</p>
-              </div>
+          {/* Contact & Agent Details */}
+          <div className="space-y-4 p-4 glass rounded-xl">
+            <h4 className="font-display font-semibold mb-2">Contact & Agent Details</h4>
+            <div className="flex items-center gap-3">
+              <Phone className="w-5 h-5" />
+              <span>+234 XXX XXX XXXX</span>
             </div>
-            <div className="blur-premium space-y-4 p-4 glass rounded-xl">
-              <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5" />
-                <span>+234 XXX XXX XXXX</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <MessageCircle className="w-5 h-5" />
-                <span>WhatsApp Available</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5" />
-                <span>email@example.com</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <User className="w-5 h-5" />
-                <span>Agent: John Doe</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5" />
-                <span>Lagos, Nigeria</span>
-              </div>
+            <div className="flex items-center gap-3">
+              <MessageCircle className="w-5 h-5" />
+              <span>WhatsApp Available</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Mail className="w-5 h-5" />
+              <span>email@example.com</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <User className="w-5 h-5" />
+              <span>Agent: John Doe</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <MapPin className="w-5 h-5" />
+              <span>Lagos, Nigeria</span>
             </div>
           </div>
 
           {/* CTA Buttons */}
           <div className="space-y-3 pt-4">
-            <button onClick={() => selectedPlayer && addToShortlist(selectedPlayer)} className="w-full py-4 rounded-xl bg-destructive text-destructive-foreground font-display font-bold text-lg hover:bg-destructive/90 transition-colors flex items-center justify-center gap-2">
-              <Lock className="w-5 h-5" />
-              Unlock This Player – ₦1,500
-            </button>
-            <button className="w-full py-4 rounded-l gradient-green opacity-60 text-primary-foreground font-display font-bold text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-1 glow-green">
-              Subscribe Monthly – Unlock Everything
+            {(() => {
+              const unlocked = selectedPlayer && unlockedIds.has(selectedPlayer.id);
+              return (
+                <button
+                  onClick={() => selectedPlayer && markUnlocked(selectedPlayer)}
+                  disabled={!selectedPlayer || unlocked}
+                  className={`w-full py-4 rounded-xl font-display font-bold text-lg transition-colors flex items-center justify-center gap-2 ${unlocked ? 'bg-green-600 text-white' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}
+                >
+                  {unlocked ? <Check className="w-5 h-5" /> : <Star className="w-5 h-5" />}
+                  {unlocked ? 'Unlocked' : 'Add to Shortlist (Free)'}
+                </button>
+              );
+            })()}
+            <button className="w-full py-4 rounded-l gradient-green text-primary-foreground font-display font-bold text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-1 glow-green">
+              Contact Player (Free)
             </button>
           </div>
         </div>

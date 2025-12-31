@@ -28,3 +28,5 @@ router.get('/player/:playerId', authenticate, getPlayerTournaments);
 export default router;
 
 
+
+

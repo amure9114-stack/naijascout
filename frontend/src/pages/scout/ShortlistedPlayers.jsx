@@ -14,7 +14,7 @@ function Index() {
             <h1 className="text-2xl font-bold mb-6 text-white">Shortlisted Players</h1>
 
             {shortlist.length === 0 ? (
-                <div className="text-white/80">You have no shortlisted players yet. Click "Unlock" on a player to add them here.</div>
+                <div className="text-white/80">You have no shortlisted players yet. Click "Add to shortlist" on a player to save them here.</div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {shortlist.map((player) => (

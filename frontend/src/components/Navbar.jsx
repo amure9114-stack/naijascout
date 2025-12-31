@@ -70,7 +70,7 @@ const NavBar = ({ variant, links }) => {
   }, [isNavVisible]);
 
   const items = isPlayerVariant ? playerNavItems : isScoutVariant ? scoutNavItems : defaultNavItems;
-  const showJoinNow = !isPlayerVariant && !isScoutVariant && !isFanVariant && !isAcademyVariant;
+  const showSignIn = !isPlayerVariant && !isScoutVariant && !isFanVariant && !isAcademyVariant;
 
   return (
     <div
@@ -83,10 +83,10 @@ const NavBar = ({ variant, links }) => {
           <div className="flex items-center gap-7">
             <img src="/img/logo.png" alt="logo" className="w-14 rounded-lg" />
 
-            {showJoinNow && (
+            {showSignIn && (
               <Button
                 id="product-button"
-                title="Join Now"
+                title="Sign In"
                 rightIcon={<TiLocationArrow />}
                 containerClass="bg-green-600 text-white hover:bg-white hover:text-green-600 md:flex hidden items-center justify-center gap-1 transition-colors duration-300"
                 onClick={() => window.location.href = "/auth/dashboard"}
@@ -99,70 +99,70 @@ const NavBar = ({ variant, links }) => {
             <div className="hidden md:block">
               {links
                 ? links.map((link) => (
-                    <Link key={link.name} to={link.path} className="nav-hover-btn">
-                      {link.name}
-                    </Link>
-                  ))
+                  <Link key={link.name} to={link.path} className="nav-hover-btn">
+                    {link.name}
+                  </Link>
+                ))
                 : items.map((item) => {
-                    // If we're in a dashboard, navigate to actual pages instead of auth
-                    if (isPlayerVariant) {
-                      if (item === "Dashboard") {
-                        return <Link key={item} to="/player/dashboard" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "About") {
-                        return <a key={item} href="#about" className="nav-hover-btn">{item}</a>;
-                      } else if (item === "Contact") {
-                        return <a key={item} href="#contact" className="nav-hover-btn">{item}</a>;
-                      } else if (item === "Home") {
-                        return <Link key={item} to="/" className="nav-hover-btn">{item}</Link>;
-                      }
-                    } else if (isScoutVariant) {
-                      if (item === "Profile") {
-                        return <Link key={item} to="/scout/profile" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Reports") {
-                        return <Link key={item} to="/scout/reports" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Players") {
-                        return <Link key={item} to="/scout/players" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Analytics") {
-                        return <Link key={item} to="/scout/analytics" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Settings") {
-                        return <Link key={item} to="/scout/settings" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Home") {
-                        return <Link key={item} to="/" className="nav-hover-btn">{item}</Link>;
-                      }
-                    } else if (isFanVariant) {
-                      if (item === "Dashboard") {
-                        return <Link key={item} to="/fan/dashboard" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Feed") {
-                        return <Link key={item} to="/fan/feed" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Community") {
-                        return <Link key={item} to="/fan/community" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Predictions") {
-                        return <Link key={item} to="/fan/predictions" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Home") {
-                        return <Link key={item} to="/" className="nav-hover-btn">{item}</Link>;
-                      }
-                    } else if (isAcademyVariant) {
-                      if (item === "Dashboard") {
-                        return <Link key={item} to="/academy/dashboard" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Players") {
-                        return <Link key={item} to="/academy/players" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Trials") {
-                        return <Link key={item} to="/academy/trials" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Settings") {
-                        return <Link key={item} to="/academy/settings" className="nav-hover-btn">{item}</Link>;
-                      } else if (item === "Home") {
-                        return <Link key={item} to="/" className="nav-hover-btn">{item}</Link>;
-                      }
-                    } else {
-                      // Default navigation for home page
-                      if (item === "Players" || item === "Dashboard" || item === "Scouts" || item === "Profile" || item === "Reports" || item === "Analytics" || item === "Settings") {
-                        return <Link key={item} to="/auth/dashboard" className="nav-hover-btn">{item}</Link>;
-                      } else {
-                        return <a key={item} href={`#${item.toLowerCase()}`} className="nav-hover-btn">{item}</a>;
-                      }
+                  // If we're in a dashboard, navigate to actual pages instead of auth
+                  if (isPlayerVariant) {
+                    if (item === "Dashboard") {
+                      return <Link key={item} to="/player/dashboard" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "About") {
+                      return <a key={item} href="#about" className="nav-hover-btn">{item}</a>;
+                    } else if (item === "Contact") {
+                      return <a key={item} href="#contact" className="nav-hover-btn">{item}</a>;
+                    } else if (item === "Home") {
+                      return <Link key={item} to="/" className="nav-hover-btn">{item}</Link>;
                     }
-                    return null;
-                  })}
+                  } else if (isScoutVariant) {
+                    if (item === "Profile") {
+                      return <Link key={item} to="/scout/profile" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Reports") {
+                      return <Link key={item} to="/scout/reports" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Players") {
+                      return <Link key={item} to="/scout/players" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Analytics") {
+                      return <Link key={item} to="/scout/analytics" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Settings") {
+                      return <Link key={item} to="/scout/settings" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Home") {
+                      return <Link key={item} to="/" className="nav-hover-btn">{item}</Link>;
+                    }
+                  } else if (isFanVariant) {
+                    if (item === "Dashboard") {
+                      return <Link key={item} to="/fan/dashboard" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Feed") {
+                      return <Link key={item} to="/fan/feed" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Community") {
+                      return <Link key={item} to="/fan/community" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Predictions") {
+                      return <Link key={item} to="/fan/predictions" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Home") {
+                      return <Link key={item} to="/" className="nav-hover-btn">{item}</Link>;
+                    }
+                  } else if (isAcademyVariant) {
+                    if (item === "Dashboard") {
+                      return <Link key={item} to="/academy/dashboard" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Players") {
+                      return <Link key={item} to="/academy/players" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Trials") {
+                      return <Link key={item} to="/academy/trials" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Settings") {
+                      return <Link key={item} to="/academy/settings" className="nav-hover-btn">{item}</Link>;
+                    } else if (item === "Home") {
+                      return <Link key={item} to="/" className="nav-hover-btn">{item}</Link>;
+                    }
+                  } else {
+                    // Default navigation for home page
+                    if (item === "Players" || item === "Dashboard" || item === "Scouts" || item === "Profile" || item === "Reports" || item === "Analytics" || item === "Settings") {
+                      return <Link key={item} to="/auth/dashboard" className="nav-hover-btn">{item}</Link>;
+                    } else {
+                      return <a key={item} href={`#${item.toLowerCase()}`} className="nav-hover-btn">{item}</a>;
+                    }
+                  }
+                  return null;
+                })}
             </div>
 
             <button

@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Mail, Calendar } from 'lucide-react';
 
 export function BasicInfoForm({ defaultValues, onSubmit, calculateAge }) {
     const [formData, setFormData] = useState(defaultValues || {});
+
+    useEffect(() => {
+        setFormData(defaultValues || {});
+    }, [defaultValues]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

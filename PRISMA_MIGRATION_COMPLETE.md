@@ -190,3 +190,5 @@ curl -X PUT http://localhost:5000/api/players/me \
 5. **Validation**: Prisma validates data types automatically
 
 
+
+

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Button from '../../components/Button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaBullseye, FaUsers, FaCalendar, FaSearch, FaBell, FaPlus, FaCrown, FaSignOutAlt, FaComment, FaHeart, FaShare, FaTrophy } from 'react-icons/fa';
 import Feed from "../../components/Feed";
 
@@ -15,6 +15,7 @@ export function FanProfile() {
   const [selectedSection, setSelectedSection] = useState("profile");
   const [notifications, setNotifications] = useState({ updates: true, highlights: false });
   const [profile, setProfile] = useState({ name: "Fan Name", team: "Super Eagles Fan" });
+  const navigate = useNavigate();
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -62,7 +63,7 @@ export function FanProfile() {
                       containerClass={`w-full justify-start text-sm sm:text-base text-white/80 hover:bg-green-600/20 hover:text-white transition-all duration-700 ease-out hover:scale-[1.02] ${window.location.pathname === item.path ? "bg-green-600/30 text-white" : ""}`}
                       onClick={() => setSelectedSection(item.name.toLowerCase())}
                     >
-                 
+
                       {item.name}
                     </Button>
                   </Link>
@@ -75,7 +76,7 @@ export function FanProfile() {
                 {toolsMenu.map((item, index) => (
                   <Link key={index} to={item.path}>
                     <Button containerClass="w-full justify-start text-sm sm:text-base text-white/80 hover:bg-green-600/20 hover:text-white transition-all duration-700 ease-out hover:scale-[1.02]">
-                    
+
                       {item.name}
                     </Button>
                   </Link>
@@ -88,15 +89,23 @@ export function FanProfile() {
               <div className="text-center space-y-2 sm:space-y-3">
                 <FaCrown className="mx-auto h-6 sm:h-8 w-6 sm:w-8 text-green-400" />
                 <div>
-                  <h4 className="text-white font-semibold text-sm sm:text-lg">Go Premium</h4>
-                  <p className="text-white/70 text-xs sm:text-sm">Unlock exclusive content</p>
+                  <h4 className="text-white font-semibold text-sm sm:text-lg">Highlights & Tips</h4>
+                  <p className="text-white/70 text-xs sm:text-sm">All access, always free</p>
                 </div>
                 <Button containerClass="w-full bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm transition-all duration-700 ease-out hover:scale-[1.02]">
-                  Upgrade Now
+                  View Tips
                 </Button>
               </div>
             </Card>
-            <Button containerClass="w-full justify-start text-sm sm:text-base text-white/80 hover:bg-green-600/20 hover:text-white transition-all duration-700 ease-out hover:scale-[1.02]">
+            <Button
+              containerClass="w-full justify-start text-sm sm:text-base text-white/80 hover:bg-green-600/20 hover:text-white transition-all duration-700 ease-out hover:scale-[1.02]"
+              onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('username');
+                navigate('/');
+              }}
+            >
               <FaSignOutAlt className="mr-3" />
               Logout
             </Button>

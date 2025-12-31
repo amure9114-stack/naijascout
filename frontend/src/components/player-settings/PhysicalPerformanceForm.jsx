@@ -1,8 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Zap, Target, Activity, TrendingUp } from 'lucide-react';
 
 export function PhysicalPerformanceForm({ defaultValues, onSubmit, onBack }) {
     const [formData, setFormData] = useState(defaultValues || {});
+
+    useEffect(() => {
+        setFormData(defaultValues || {});
+    }, [defaultValues]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

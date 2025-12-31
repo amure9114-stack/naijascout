@@ -1,5 +1,7 @@
 import express from 'express';
 import Player from '../models/Player.js';
+import User from '../models/User.js';
+import { authenticate } from '../middleware/auth.js';
 import { body, param, query, validationResult } from 'express-validator';
 
 const router = express.Router();
@@ -302,6 +304,61 @@ const handleValidation = (req, res, next) => {
   next();
 };
 
+// Map UI positions to canonical values
+const normalizePosition = (pos) => {
+  if (!pos) return undefined;
+  const normalized = pos.toString().trim().toLowerCase();
+  const map = {
+    forward: 'forward',
+    striker: 'forward',
+    midfielder: 'midfielder',
+    defender: 'defender',
+    goalkeeper: 'goalkeeper',
+    gk: 'goalkeeper'
+  };
+  return map[normalized] || normalized;
+};
+
+// Build an update payload for the authenticated player's profile
+const buildProfileUpdate = (body, user) => {
+  const normalizedPosition = normalizePosition(body.position);
+  const firstName = body.firstName || user?.name?.split(' ')[0];
+  const lastName = body.lastName || user?.name?.split(' ').slice(1).join(' ');
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || body.name || user?.name || 'Player';
+
+  return {
+    user: user?._id,
+    username: user?.username,
+    name: fullName,
+    firstName,
+    lastName,
+    dateOfBirth: body.dateOfBirth || undefined,
+    age: body.age || undefined,
+    email: body.email || user?.email,
+    phone: body.phone || undefined,
+    nationality: body.nationality || undefined,
+    position: normalizedPosition,
+    jerseyNumber: body.jerseyNumber || undefined,
+    preferredFoot: body.preferredFoot || undefined,
+    club: body.club || undefined,
+    bio: body.bio || undefined,
+    story: body.story || undefined,
+    profilePicture: body.profilePicture || body.profilePictureUrl || undefined,
+    highlightsLink: body.highlightsLink || undefined,
+    height: body.height || undefined,
+    weight: body.weight || undefined,
+    overallRating: body.overallRating || undefined,
+    potential: body.potential || undefined,
+    engagement: {
+      goals: typeof body.goals === 'number' ? body.goals : body.goals ? Number(body.goals) : undefined,
+      assists: typeof body.assists === 'number' ? body.assists : body.assists ? Number(body.assists) : undefined,
+      matches: typeof body.matches === 'number' ? body.matches : body.matches ? Number(body.matches) : undefined,
+      interactions: undefined,
+      minutes: undefined
+    }
+  };
+};
+
 // @desc    Get all players
 // @route   GET /api/players
 // @access  Public
@@ -333,6 +390,99 @@ router.get('/', validatePlayerQuery, handleValidation, async (req, res, next) =>
       },
       data: players
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @desc    Get current authenticated player profile
+// @route   GET /api/players/me
+// @access  Private (Player)
+router.get('/me', authenticate, async (req, res, next) => {
+  try {
+    const userId = req.user?.sub;
+    if (!userId) return res.status(401).json({ success: false, message: 'Not authenticated' });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const player = await Player.findOne({ user: user._id }) || await Player.findOne({ username: user.username });
+    if (!player) {
+      return res.status(404).json({ success: false, message: 'Player profile not found' });
+    }
+
+    const data = player.toObject();
+    data.id = data._id?.toString();
+    res.json({ success: true, data });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @desc    Upsert current authenticated player profile
+// @route   PUT /api/players/me
+// @access  Private (Player)
+router.put('/me', authenticate, async (req, res, next) => {
+  try {
+    const userId = req.user?.sub;
+    if (!userId) return res.status(401).json({ success: false, message: 'Not authenticated' });
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const update = buildProfileUpdate(req.body || {}, user);
+
+    // Preserve existing engagement numbers when not provided
+    const existing = await Player.findOne({ user: user._id }) || await Player.findOne({ username: user.username });
+    if (existing) {
+      update.engagement = {
+        goals: update.engagement.goals ?? existing.engagement?.goals ?? 0,
+        assists: update.engagement.assists ?? existing.engagement?.assists ?? 0,
+        matches: update.engagement.matches ?? existing.engagement?.matches ?? 0,
+        interactions: existing.engagement?.interactions ?? 0,
+        minutes: existing.engagement?.minutes ?? 0
+      };
+    } else {
+      update.engagement = {
+        goals: update.engagement.goals ?? 0,
+        assists: update.engagement.assists ?? 0,
+        matches: update.engagement.matches ?? 0,
+        interactions: 0,
+        minutes: 0
+      };
+    }
+
+    update.scoutPoints = (update.engagement.goals || 0) + (update.engagement.assists || 0) * 2 + (update.engagement.interactions || 0);
+
+    const player = await Player.findOneAndUpdate(
+      { user: user._id },
+      { $set: update },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    res.json({ success: true, data: player });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @desc    Get player by username
+// @route   GET /api/players/username/:username
+// @access  Public
+router.get('/username/:username', async (req, res, next) => {
+  try {
+    const username = req.params.username?.toLowerCase();
+    if (!username) return res.status(400).json({ success: false, message: 'Username is required' });
+
+    const player = await Player.findOne({ username }) || await Player.findOne({ name: new RegExp(`^${username}$`, 'i') });
+    if (!player) {
+      const err = new Error('Player not found');
+      err.status = 404;
+      return next(err);
+    }
+    const data = player.toObject();
+    data.id = data._id?.toString();
+    res.json({ success: true, data });
   } catch (error) {
     next(error);
   }
@@ -378,8 +528,8 @@ router.post('/', validatePlayer, handleValidation, async (req, res, next) => {
 router.put('/:id', param('id').isMongoId().withMessage('Invalid player ID'), validatePlayer, handleValidation, async (req, res, next) => {
   try {
     const player = await Player.findByIdAndUpdate(
-      req.params.id, 
-      req.body, 
+      req.params.id,
+      req.body,
       { new: true, runValidators: true }
     );
     if (!player) {

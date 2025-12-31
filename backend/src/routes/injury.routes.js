@@ -33,3 +33,5 @@ router.delete('/:id', authenticate, deleteInjury);
 export default router;
 
 
+
+

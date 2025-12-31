@@ -3,14 +3,13 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url = env("DATABASE_URL")
+  provider = "mongodb"
 }
 
 // Role enum removed for SQLite compatibility; use string role instead
 
 model User {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   username    String   @unique
   email       String   @unique
@@ -23,9 +22,9 @@ model User {
 }
 
 model Shortlist {
-  id        Int      @id @default(autoincrement())
-  scoutId   Int      @map("scout_id")
-  playerId  Int      @map("player_id")
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  scoutId   String   @map("scout_id") @db.ObjectId
+  playerId  String   @map("player_id") @db.ObjectId
   notes     String?
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -37,7 +36,7 @@ model Shortlist {
 }
 
 model Player {
-  id             Int      @id @default(autoincrement())
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
   username       String   @unique
   firstName      String
   lastName       String
@@ -59,6 +58,7 @@ model Player {
   injuries            Injury[]
   sponsorshipApplications SponsorshipApplication[]
   tournamentRegistrations TournamentRegistration[]
+  scoutingReports     ScoutingReport[]
 
   @@index([overallRating])
   @@index([age])
@@ -66,7 +66,7 @@ model Player {
 }
 
 model Scout {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   email     String   @unique
   password  String
@@ -76,14 +76,31 @@ model Scout {
   updatedAt DateTime @updatedAt
 
   shortlists Shortlist[]
+  reports    ScoutingReport[]
 
   @@map("Scout")
 }
 
+model ScoutingReport {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  scoutId   String   @map("scout_id") @db.ObjectId
+  playerId  String   @map("player_id") @db.ObjectId
+  summary   String
+  rating    Float?
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  scout  Scout   @relation(fields: [scoutId], references: [id], onDelete: Cascade)
+  player Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("scouting_report")
+}
+
 
 model Match {
-  id        Int      @id @default(autoincrement())
-  playerId  Int
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId  String   @db.ObjectId
   opponent  String
   date      DateTime
   rating    Float
@@ -99,7 +116,7 @@ model Match {
 }
 
 model Trial {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   location    String
   ageGroup    String?
@@ -115,11 +132,11 @@ model Trial {
 }
 
 model TrialApplication {
-  id        Int      @id @default(autoincrement())
-  trialId  Int
-  playerId Int
-  status   String   @default("pending") // pending, approved, rejected
-  notes    String?
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  trialId   String   @db.ObjectId
+  playerId  String   @db.ObjectId
+  status    String   @default("pending")
+  notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -131,12 +148,12 @@ model TrialApplication {
 }
 
 model Injury {
-  id              Int      @id @default(autoincrement())
-  playerId        Int
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  playerId        String   @db.ObjectId
   injuryType      String
   bodyPart        String
-  severity        String   // mild, moderate, severe
-  status          String   // active, recovering, recovered
+  severity        String
+  status          String
   dateInjured      DateTime
   expectedRecovery DateTime?
   actualRecovery   DateTime?
@@ -150,16 +167,16 @@ model Injury {
 }
 
 model Sponsorship {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
-  type        String   // corporate, foundation, nonprofit, individual
-  amount      String   // e.g., "₦300,000 - ₦800,000"
-  period      String   // per year, per month, etc.
+  type        String
+  amount      String
+  period      String
   location    String
   focus       String
   description String?
-  requirements String? // JSON string or text
-  benefits    String?  // JSON string or text
+  requirements String?
+  benefits    String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -170,10 +187,10 @@ model Sponsorship {
 }
 
 model SponsorshipApplication {
-  id              Int      @id @default(autoincrement())
-  sponsorshipId   Int
-  playerId        Int
-  status          String   @default("pending") // pending, approved, rejected
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  sponsorshipId   String   @db.ObjectId
+  playerId        String   @db.ObjectId
+  status          String   @default("pending")
   fullName        String
   email           String
   phone           String
@@ -192,13 +209,13 @@ model SponsorshipApplication {
 }
 
 model Tournament {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   location    String
   startDate  DateTime
   endDate     DateTime?
   description String?
-  category    String?  // youth, professional, amateur, etc.
+  category    String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -209,10 +226,10 @@ model Tournament {
 }
 
 model TournamentRegistration {
-  id          Int      @id @default(autoincrement())
-  tournamentId Int
-  playerId    Int
-  status      String   @default("registered") // registered, confirmed, cancelled
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  tournamentId String   @db.ObjectId
+  playerId    String   @db.ObjectId
+  status      String   @default("registered")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -221,4 +238,42 @@ model TournamentRegistration {
 
   @@unique([tournamentId, playerId])
   @@map("TournamentRegistration")
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  type      String   // e.g., "trial_update", "message", "follow", "shortlist"
+  title     String
+  message   String
+  relatedId String?  @db.ObjectId
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("Notification")
+}
+
+model Message {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String   @db.ObjectId
+  receiverId String   @db.ObjectId
+  text       String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("Message")
+}
+
+model Follow {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  followerId String   @db.ObjectId
+  followeeId String   @db.ObjectId
+  createdAt  DateTime @default(now())
+
+  @@unique([followerId, followeeId])
+  @@map("Follow")
 }

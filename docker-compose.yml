@@ -16,13 +16,13 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongo:27017/naijascout
       - PORT=5000
-      - NODE_ENV=development
-      - CORS_ORIGIN=http://localhost:5173
-      - JWT_SECRET=dev-secret
+      - NODE_ENV=production
+      - CORS_ORIGIN=https://naijascout.app
+      - JWT_SECRET=agbabiaka7G
     ports:
       - "5000:5000"
     depends_on:
-      - mongo
+      - mongokjk
     # For production we run the image as-built. During development, you can
     # mount the source directory but be careful to not hide container-installed
     # node_modules. The mount is disabled by default here so the image's

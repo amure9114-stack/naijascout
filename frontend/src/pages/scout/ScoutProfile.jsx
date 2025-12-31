@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { pageFade, listContainer, listItem } from '../../lib/animations';
 import Button from '../../components/Button';
 import { Link, useNavigate } from 'react-router-dom';
+import { usePlayers } from '../../context/PlayerContext.jsx';
 import {
   FaFileAlt, FaChartBar, FaRegEnvelope, FaSearch, FaUsers,
   FaBullseye, FaCalendar, FaBell, FaCog, FaPlus, FaCrown, FaSignOutAlt
@@ -25,9 +26,22 @@ const AvatarFallback = ({ children, className }) => <div className={`bg-white/20
 
 export function ScoutProfile() {
   const navigate = useNavigate();
-  const [selectedSection, setSelectedSection] = useState("profile");
+  const { shortlist } = usePlayers();
+  const [selectedSection, setSelectedSection] = useState("dashboard");
   const [notifications, setNotifications] = useState({ trials: true, updates: false });
   const [profile, setProfile] = useState({ name: "John Doe", role: "Lead Scout" });
+  const [settingsForm, setSettingsForm] = useState({
+    experience: "3-5 years",
+    certifications: "CAF D License",
+    regions: "Lagos, Abuja, Port Harcourt",
+    preferredPositions: "Forwards, Wingers, Fullbacks",
+    strengths: "High potential identification, technical analysis",
+    photoUrl: "",
+    videoUrl: "",
+    bio: "Passionate about unearthing Nigerian talent and supporting their pathway to the pros."
+  });
+  const [settingsError, setSettingsError] = useState("");
+  const [settingsSaved, setSettingsSaved] = useState(false);
 
   // PROTECTED + LOGOUT
   useEffect(() => {
@@ -59,7 +73,8 @@ export function ScoutProfile() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userRole");
-    navigate("/auth");
+    localStorage.removeItem("username");
+    navigate("/");
   };
 
   useEffect(() => {
@@ -74,11 +89,12 @@ export function ScoutProfile() {
   }, []);
 
   const mainMenu = [
-    { name: "Profile", icon: <FaUsers className="mr-3" />, section: "profile" },
+    { name: "Dashboard", icon: <FaBullseye className="mr-3" />, section: "dashboard" },
     { name: "Players", icon: <FaSearch className="mr-3" />, section: "players" },
     { name: "Reports", icon: <FaFileAlt className="mr-3" />, section: "shortlisted" },
-    { name: "Analytics", icon: <FaChartBar className="mr-3" />, section: "shortlisted" },
+    { name: "Analytics", icon: <FaChartBar className="mr-3" />, section: "analytics" },
     { name: "Trials", icon: <FaCalendar className="mr-3" />, section: "trials" },
+    { name: "Settings", icon: <FaCog className="mr-3" />, section: "settings" },
   ];
 
   return (
@@ -138,13 +154,14 @@ export function ScoutProfile() {
         <div className="col-span-1 mt-9 md:col-span-10 h-screen overflow-y-auto">
           <AnimatePresence exitBeforeEnter>
             <motion.div key={selectedSection} variants={pageFade} initial="initial" animate="animate" exit="exit" className="space-y-6">
-              {/* Profile Section */}
-              {selectedSection === "profile" && (
+              {/* Dashboard */}
+              {selectedSection === "dashboard" && (
                 <>
                   <Card className="backdrop-blur-xl bg-black/20 border border-white/20 rounded-3xl p-4 sm:p-6 header">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
                       <div>
-                        <p className="text-white/60 text-sm">Welcome back! Manage your scouting network</p>
+                        <p className="text-white/60 text-sm">Dashboard — {profile.name}</p>
+                        <p className="text-white text-base font-semibold">{profile.role}</p>
                       </div>
                       <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-4 w-full sm:w-auto">
                         <div className="relative w-full sm:w-70 mb-4 sm:mb-0">
@@ -160,7 +177,7 @@ export function ScoutProfile() {
                   <Card className="backdrop-blur-xl bg-black/20 border border-white/20 rounded-3xl p-4 sm:p-6 profile-card">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
                       <Avatar className="w-24 sm:w-32 h-24 sm:h-32 border-4 border-green-600">
-                        <AvatarFallback>JD</AvatarFallback>
+                        <AvatarFallback>{profile.name?.slice(0, 2)?.toUpperCase() || 'SC'}</AvatarFallback>
                       </Avatar>
                       <div className="mt-4 sm:mt-0 sm:ml-6 text-center sm:text-left w-full sm:w-auto">
                         <h3 className="text-xl sm:text-2xl font-semibold text-white">{profile.name}</h3>
@@ -170,23 +187,101 @@ export function ScoutProfile() {
                     </div>
                   </Card>
 
-                  {selectedSection === "settings" && (
-                    <Card className="backdrop-blur-xl bg-black/20 border border-white/20 rounded-3xl p-4 sm:p-6 settings">
-                      <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Settings</h3>
-                      <div className="space-y-3 sm:space-y-4">
-                        <div>
-                          <label className="text-white/80 text-sm sm:text-base">Name</label>
-                          <Input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} className="mt-1 sm:mt-2 w-full" />
-                        </div>
-                        <div>
-                          <label className="text-white/80 text-sm sm:text-base">Role</label>
-                          <Input value={profile.role} onChange={(e) => setProfile({ ...profile, role: e.target.value })} className="mt-1 sm:mt-2 w-full" />
-                        </div>
-                        <Button onClick={() => setSelectedSection("profile")} className="mt-3 sm:mt-4 w-full sm:w-auto">Save Changes</Button>
-                      </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <Card className="backdrop-blur-xl bg-black/20 border border-white/20">
+                      <h4 className="text-white font-semibold mb-2">Active Shortlists</h4>
+                      <p className="text-3xl font-display font-bold text-green-400">{shortlist.length}</p>
+                      <p className="text-white/60 text-sm mt-1">Players you are tracking right now</p>
                     </Card>
-                  )}
+                    <Card className="backdrop-blur-xl bg-black/20 border border-white/20">
+                      <h4 className="text-white font-semibold mb-2">Upcoming Trials</h4>
+                      <p className="text-3xl font-display font-bold text-green-400">2</p>
+                      <p className="text-white/60 text-sm mt-1">Stay ready for invitations and updates</p>
+                    </Card>
+                    <Card className="backdrop-blur-xl bg-black/20 border border-white/20">
+                      <h4 className="text-white font-semibold mb-2">New Leads</h4>
+                      <p className="text-3xl font-display font-bold text-green-400">5</p>
+                      <p className="text-white/60 text-sm mt-1">Fresh players shared with you</p>
+                    </Card>
+                  </div>
                 </>
+              )}
+
+              {/* Settings */}
+              {selectedSection === "settings" && (
+                <Card className="backdrop-blur-xl bg-black/20 border border-white/20 rounded-3xl p-4 sm:p-6 settings">
+                  <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 sm:mb-4">Scout Qualifications & Verification</h3>
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-white/80 text-sm sm:text-base">Name</label>
+                        <Input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} className="mt-1 sm:mt-2 w-full" />
+                      </div>
+                      <div>
+                        <label className="text-white/80 text-sm sm:text-base">Role / Title</label>
+                        <Input value={profile.role} onChange={(e) => setProfile({ ...profile, role: e.target.value })} className="mt-1 sm:mt-2 w-full" />
+                      </div>
+                      <div>
+                        <label className="text-white/80 text-sm sm:text-base">Experience</label>
+                        <Input value={settingsForm.experience} onChange={(e) => setSettingsForm({ ...settingsForm, experience: e.target.value })} className="mt-1 sm:mt-2 w-full" />
+                      </div>
+                      <div>
+                        <label className="text-white/80 text-sm sm:text-base">Certifications</label>
+                        <Input value={settingsForm.certifications} onChange={(e) => setSettingsForm({ ...settingsForm, certifications: e.target.value })} className="mt-1 sm:mt-2 w-full" />
+                      </div>
+                      <div>
+                        <label className="text-white/80 text-sm sm:text-base">Regions Covered</label>
+                        <Input value={settingsForm.regions} onChange={(e) => setSettingsForm({ ...settingsForm, regions: e.target.value })} className="mt-1 sm:mt-2 w-full" />
+                      </div>
+                      <div>
+                        <label className="text-white/80 text-sm sm:text-base">Preferred Positions</label>
+                        <Input value={settingsForm.preferredPositions} onChange={(e) => setSettingsForm({ ...settingsForm, preferredPositions: e.target.value })} className="mt-1 sm:mt-2 w-full" />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-white/80 text-sm sm:text-base">Scouting Bio</label>
+                      <textarea
+                        value={settingsForm.bio}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, bio: e.target.value })}
+                        className="w-full mt-1 sm:mt-2 rounded-xl bg-white/10 border border-white/30 text-white placeholder:text-white/50 p-3 focus:border-green-500 focus:bg-white/15"
+                        rows={3}
+                        placeholder="Share how you scout, your philosophy, and how clubs can reach you."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <label className="text-white/80 text-sm sm:text-base">Profile Photo URL</label>
+                        <Input value={settingsForm.photoUrl} onChange={(e) => setSettingsForm({ ...settingsForm, photoUrl: e.target.value })} className="mt-1 sm:mt-2 w-full" placeholder="Link to your scout photo" />
+                      </div>
+                      <div>
+                        <label className="text-white/80 text-sm sm:text-base">Verification Video URL</label>
+                        <Input value={settingsForm.videoUrl} onChange={(e) => setSettingsForm({ ...settingsForm, videoUrl: e.target.value })} className="mt-1 sm:mt-2 w-full" placeholder="Short intro or highlights video" />
+                      </div>
+                    </div>
+                    <p className="text-xs text-white/70">Provide at least one media link (photo or video) for verification.</p>
+
+                    {settingsError && <p className="text-destructive text-sm">{settingsError}</p>}
+                    {settingsSaved && !settingsError && <p className="text-green-400 text-sm">Saved — your qualifications are updated.</p>}
+
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                      <Button onClick={() => {
+                        if (!settingsForm.photoUrl && !settingsForm.videoUrl) {
+                          setSettingsError("Please add a profile photo or a short video link for verification.");
+                          setSettingsSaved(false);
+                          return;
+                        }
+                        setSettingsError("");
+                        setSettingsSaved(true);
+                        setTimeout(() => setSettingsSaved(false), 2500);
+                        setSelectedSection("dashboard");
+                      }}
+                      >Save & Verify</Button>
+                      <Button containerClass="bg-transparent border border-white/30" onClick={() => setSelectedSection("dashboard")}>Cancel</Button>
+                    </div>
+                  </div>
+                </Card>
               )}
 
               {/* Players → Full PlayerPool */}
@@ -196,8 +291,30 @@ export function ScoutProfile() {
                 </motion.div>
               )}
 
-              {/* Reports & Analytics → Only Shortlisted */}
+              {/* Reports */}
               {selectedSection === "shortlisted" && <ShortlistedPlayers />}
+
+              {/* Analytics */}
+              {selectedSection === "analytics" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="backdrop-blur-xl bg-black/20 border border-white/20">
+                    <h4 className="text-white font-semibold mb-2">Pipeline Overview</h4>
+                    <ul className="text-white/80 space-y-1 text-sm">
+                      <li>• 5 new leads added this week</li>
+                      <li>• 2 players invited to trials</li>
+                      <li>• 1 player signed to shortlist club</li>
+                    </ul>
+                  </Card>
+                  <Card className="backdrop-blur-xl bg-black/20 border border-white/20">
+                    <h4 className="text-white font-semibold mb-2">Focus Areas</h4>
+                    <ul className="text-white/80 space-y-1 text-sm">
+                      <li>• Need left-footed fullbacks</li>
+                      <li>• Priority age bracket: 18-23</li>
+                      <li>• Monitor pace and physicality metrics</li>
+                    </ul>
+                  </Card>
+                </div>
+              )}
 
               {/* Trials → Your real trials.jsx */}
               {selectedSection === "trials" && <TrialsManagement />}

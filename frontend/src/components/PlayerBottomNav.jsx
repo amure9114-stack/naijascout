@@ -13,7 +13,7 @@ export default function PlayerBottomNav() {
         { name: 'Sponsorships', path: '/player/sponsorships', icon: <FaHandsHelping /> },
         { name: 'Analytics', path: '/player/analytics', icon: <FaChartLine /> },
         { name: 'Settings', path: '/player/settings', icon: <FaCog /> },
-        { name: 'Logout', path: '/auth', icon: <FaSignOutAlt /> },
+        { name: 'Logout', path: '/', icon: <FaSignOutAlt /> },
     ];
 
     // Keyboard navigation (left/right) between nav items
@@ -56,7 +56,12 @@ export default function PlayerBottomNav() {
                                 <button
                                     role="menuitem"
                                     aria-label="Logout"
-                                    onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userRole'); localStorage.removeItem('username'); navigate('/auth'); }}
+                                    onClick={() => {
+                                        localStorage.removeItem('token');
+                                        localStorage.removeItem('userRole');
+                                        localStorage.removeItem('username');
+                                        navigate('/');
+                                    }}
                                     className={sharedClasses}
                                 >
                                     <div className={`w-6 h-6 mb-1 ${active ? 'text-green-400' : ''}`}>{it.icon}</div>

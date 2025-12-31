@@ -7,7 +7,12 @@ const userSchema = new mongoose.Schema(
     username: { type: String, required: true, unique: true, index: true, lowercase: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
-    role: { type: String, enum: ['Fan', 'Player', 'Scout', 'Academy'], default: 'Fan' }
+    role: {
+      type: String,
+      enum: ['fan', 'player', 'scout', 'academy', 'admin'],
+      lowercase: true,
+      default: 'fan'
+    }
   },
   { timestamps: true }
 );

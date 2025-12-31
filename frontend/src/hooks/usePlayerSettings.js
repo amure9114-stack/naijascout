@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 export function usePlayerSettings() {
     const [currentStep, setCurrentStep] = useState(0);
     const [formData, setFormData] = useState({});
@@ -13,18 +15,55 @@ export function usePlayerSettings() {
         tips: []
     });
 
-    // Load data from localStorage on mount
+    // Load data from localStorage and hydrate from backend if authenticated
     useEffect(() => {
         const saved = localStorage.getItem('playerSettings');
+        let savedData = null;
         if (saved) {
             try {
-                const data = JSON.parse(saved);
-                setFormData(data);
+                savedData = JSON.parse(saved);
+                setFormData(savedData);
                 setIsFirstTime(false);
             } catch (err) {
                 console.error('Failed to load saved data:', err);
             }
         }
+
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const loadProfile = async () => {
+            setIsLoading(true);
+            try {
+                const res = await fetch(`${API_URL}/api/players/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!res.ok) {
+                    if (res.status !== 404) {
+                        console.warn('Failed to fetch profile from backend', await res.text());
+                    }
+                    return;
+                }
+
+                const payload = await res.json();
+                const profile = payload?.data || {};
+                const merged = { ...profile, ...(savedData || {}) };
+                setFormData(merged);
+                if (Object.keys(profile).length) {
+                    setIsFirstTime(false);
+                }
+            } catch (err) {
+                console.warn('Failed to hydrate profile from backend', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadProfile();
     }, []);
 
     // Calculate profile completeness
@@ -75,7 +114,6 @@ export function usePlayerSettings() {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
                     // Use /me endpoint for better security
                     await fetch(`${API_URL}/api/players/me`, {
                         method: 'PUT',
@@ -105,7 +143,6 @@ export function usePlayerSettings() {
                 throw new Error('Not authenticated');
             }
 
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
             // Use /me endpoint for better security (no username in URL)
             const res = await fetch(`${API_URL}/api/players/me`, {
                 method: 'PUT',
@@ -121,8 +158,12 @@ export function usePlayerSettings() {
                 throw new Error(`Save failed: ${errText}`);
             }
 
+            const responseBody = await res.json().catch(() => null);
+            const persisted = responseBody?.data || formData;
+
             // Save to localStorage as backup
-            localStorage.setItem('playerSettings', JSON.stringify(formData));
+            localStorage.setItem('playerSettings', JSON.stringify(persisted));
+            setFormData(persisted);
             setLastSaved(new Date());
 
             // Reset first time flag

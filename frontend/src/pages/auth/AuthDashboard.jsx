@@ -104,7 +104,7 @@ const AuthDashboard = () => {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
           <Button
-            title="Continue as Player"
+            title="Continue"
             leftIcon={<TiLocationArrow className="text-xl" />}
             onClick={() => handleAuthNavigation("login")}
             disabled={!selectedRole}

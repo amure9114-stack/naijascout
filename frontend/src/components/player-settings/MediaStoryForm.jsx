@@ -1,21 +1,45 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Upload, Video, FileText, Check } from 'lucide-react';
 
 export function MediaStoryForm({ defaultValues, onSubmit, onBack, isLoading }) {
     const [formData, setFormData] = useState(defaultValues || {});
     const [previewImage, setPreviewImage] = useState(null);
+    const [validationError, setValidationError] = useState('');
+
+    useEffect(() => {
+        setFormData(defaultValues || {});
+        if (defaultValues?.profilePicture) {
+            setPreviewImage(defaultValues.profilePicture);
+        }
+    }, [defaultValues]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Validate profile picture is required
+        if (!formData.profilePicture && !previewImage) {
+            setValidationError('Profile picture is required. This will be shown in the player pool and as your profile image.');
+            return;
+        }
+
+        setValidationError('');
         onSubmit(formData);
     };
 
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (file) {
-            setFormData({ ...formData, profilePicture: file });
             const reader = new FileReader();
-            reader.onload = (event) => setPreviewImage(event.target?.result);
+            reader.onload = (event) => {
+                const dataUrl = event.target?.result;
+                setPreviewImage(dataUrl || null);
+                if (dataUrl) {
+                    // Persist the image as a base64 data URL so it can be sent via JSON to the API
+                    setFormData((prev) => ({ ...prev, profilePicture: dataUrl }));
+                    // Clear validation error when picture is added
+                    setValidationError('');
+                }
+            };
             reader.readAsDataURL(file);
         }
     };
@@ -33,7 +57,7 @@ export function MediaStoryForm({ defaultValues, onSubmit, onBack, isLoading }) {
                     <div>
                         <label className="flex items-center gap-2 text-sm font-semibold mb-4">
                             <Upload className="w-4 h-4 text-primary" />
-                            Profile Picture
+                            Profile Picture <span className="text-destructive">*</span>
                         </label>
                         <div className="relative">
                             <input
@@ -45,7 +69,7 @@ export function MediaStoryForm({ defaultValues, onSubmit, onBack, isLoading }) {
                             />
                             <label
                                 htmlFor="profilePic"
-                                className="flex flex-col items-center justify-center border-2 border-dashed border-white/30 rounded-2xl p-8 cursor-pointer hover:border-primary/60 hover:bg-white/5 transition-all duration-200"
+                                className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-8 cursor-pointer hover:border-primary/60 hover:bg-white/5 transition-all duration-200 ${validationError ? 'border-destructive/60 bg-destructive/5' : 'border-white/30'}`}
                             >
                                 {previewImage ? (
                                     <div className="flex flex-col items-center gap-4">
@@ -62,6 +86,10 @@ export function MediaStoryForm({ defaultValues, onSubmit, onBack, isLoading }) {
                                 )}
                             </label>
                         </div>
+                        {validationError && (
+                            <p className="text-destructive text-sm mt-2">{validationError}</p>
+                        )}
+                        <p className="text-xs text-white/50 mt-2">Required — This will be your profile picture in the player pool</p>
                     </div>
 
                     {/* Video Highlights */}
@@ -125,7 +153,7 @@ export function MediaStoryForm({ defaultValues, onSubmit, onBack, isLoading }) {
                     </button>
                     <button
                         type="submit"
-                        disabled={isLoading || !formData.agreeToTerms}
+                        disabled={isLoading || !formData.agreeToTerms || (!formData.profilePicture && !previewImage)}
                         className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all duration-200 hover:shadow-lg hover:shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         <Check className="w-4 h-4" />

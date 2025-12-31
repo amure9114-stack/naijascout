@@ -13,7 +13,7 @@ export default function ScoutBottomNav() {
         { name: 'Reports', path: '/scout/reports', icon: <FaUserTie /> },
         { name: 'Analytics', path: '/scout/analytics', icon: <FaChartBar /> },
         { name: 'Settings', path: '/scout/settings', icon: <FaCog /> },
-        { name: 'Logout', path: '/auth', icon: <FaSignOutAlt /> },
+        { name: 'Logout', path: '/', icon: <FaSignOutAlt /> },
     ];
 
     useEffect(() => {
@@ -45,7 +45,12 @@ export default function ScoutBottomNav() {
                     return (
                         <li key={it.path} role="none">
                             {it.name === 'Logout' ? (
-                                <button role="menuitem" aria-label="Logout" onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userRole'); localStorage.removeItem('username'); navigate('/auth'); }} className={sharedClasses}>
+                                <button role="menuitem" aria-label="Logout" onClick={() => {
+                                    localStorage.removeItem('token');
+                                    localStorage.removeItem('userRole');
+                                    localStorage.removeItem('username');
+                                    navigate('/');
+                                }} className={sharedClasses}>
                                     <div className={`w-6 h-6 mb-1 ${active ? 'text-green-400' : ''}`}>{it.icon}</div>
                                     <span className="sr-only sm:not-sr-only">{it.name}</span>
                                 </button>
